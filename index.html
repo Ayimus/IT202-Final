@@ -1,1 +1,271 @@
-//Sumiya Choudhry
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Police Department </title>
+  <link rel="manifest" href="./manifest.json">
+  <!-- material.io -->
+  <link rel="stylesheet" href="https://unpkg.com/material-components-web@0.40.0/dist/material-components-web.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link href="style.css" rel="stylesheet" type="text/css">
+
+  <!-- Include Dexie -->
+
+
+</head>
+
+<body>
+  <!-- top nav bar -->
+  <header class="mdc-top-app-bar">
+    <div class="mdc-top-app-bar__row">
+      <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+        <a href="#" class="material-icons mdc-top-app-bar__navigation-icon">menu</a>
+        <div class="mdc-top-app-bar__title">Mapping It Out</div>
+      </section>
+    </div>
+  </header>
+
+  <!-- the navigation drawer -->
+  <aside class="mdc-drawer mdc-drawer--modal" data-mdc-auto-init="MDCDrawer">
+    <div class="mdc-drawer__header">
+      <h3 class="mdc-drawer__title">Menu</h3>
+    </div>
+    <div class="mdc-drawer__content">
+      <nav class="mdc-list">
+        <a data-screen="home" class="mdc-list-item mdc-list-item--activated" href="#" tabindex="0" aria-selected="true"><i class="material-icons mdc-list-item__graphic" aria-hidden="true">home</i>Home</a>
+
+      </nav>
+    </div>
+  </aside>
+
+  <div class="mdc-drawer-scrim"></div>
+  <div id="contentArea">
+    <div class="mdc-top-app-bar--fixed-adjust"></div>
+    <div id="content" class="mdc-typography--body1"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://unpkg.com/material-components-web@0.40.0/dist/material-components-web.min.js"></script>
+  <script src="script.js"></script>
+
+
+<!--Map-->
+<style>
+  #map {
+    height: 500px;
+    max-width: 100%;
+  }
+
+  #map-border {
+    border: 10px;
+    margin: 10px;
+  }
+</style>
+
+<h2 class="mdc-typography--headline2">Map of Chicago Police Department</h2>
+<h4 class="mdc-typography--headline4">Find the nearest one to you</h4>
+
+
+<div id="map-border">
+  <div id="map"></div>
+</div>
+
+<script>
+  // Main Javascript for map
+  let map;
+  // storing markers in array for use later
+  let markersArray = [];
+
+  let chicago = {
+    lat: 41.8781,
+    lng: -87.6298
+  };
+    let hereLandmarksAPI = "https://data.cityofchicago.org/resource/9rg7-mz9y.json"
+  console.log(`1st API used is from here Technologies: ${hereLandmarksAPI}`);
+
+  let cityOfChicagoAPI = 
+  "https://data.cityofchicago.org/resource/9rg7-mz9y.json$limit=50";
+  console.log(`2nd API used is from city of chicago: ${cityOfChicagoAPI}`);
+
+  // style for Google map
+  var styles = [{
+      featureType: 'all',
+      elementType: 'all',
+      stylers: [{
+          invert_lightness: false
+        },
+        {
+          saturation: '0'
+        },
+        {
+          lightness: '5'
+        },
+        {
+          visibility: 'simplified'
+        }
+      ]
+    },
+    {
+      featureType: 'landscape.man_made',
+      elementType: 'all',
+      stylers: [{
+        weight: '1.00'
+      }]
+    },
+    {
+      featureType: 'road.highway',
+      elementType: 'all',
+      stylers: [{
+        weight: '0.49'
+      }]
+    },
+    {
+      featureType: 'road.highway',
+      elementType: 'labels',
+      stylers: [{
+          visibility: 'on'
+        },
+        {
+          weight: '0.01'
+        },
+        {
+          lightness: '-7'
+        },
+        {
+          saturation: '-35'
+        }
+      ]
+    },
+    {
+      featureType: 'road.highway',
+      elementType: 'labels.text',
+      stylers: [{
+        visibility: 'on'
+      }]
+    },
+    {
+      featureType: 'road.highway',
+      elementType: 'labels.text.stroke',
+      stylers: [{
+        visibility: 'off'
+      }]
+    },
+    {
+      featureType: 'road.highway',
+      elementType: 'labels.icon',
+      stylers: [{
+        visibility: 'on'
+      }]
+    }
+  ];
+
+
+  // Initialize and add the map
+  function initMap() {
+    let map = new google.maps.Map(document.getElementById('map'), {
+      center: chicago,
+      zoom: 11,
+      styles: styles
+    });
+
+    // use cityofchicago API
+    $.get(cityOfChicagoAPI, function(response) {
+      let data1 = response;
+      createMarkers1(map, data1);
+    });
+
+    // use hereLandmarksAPI
+    $.get(hereLandmarksAPI, function(landmarks) {
+      let data2 = landmarks;
+      createMarkers2(map, data2);
+    });
+
+    function createMarkers1(map, data1) {
+
+      $.each(data1, function(i, v) {
+        let marker;
+        let location = {
+          lat: parseFloat(v.latitude),
+          lng: parseFloat(v.longitude)
+        }
+
+        if (v.facility_type === "Police Stations") {
+          marker = new google.maps.Marker({
+            map: map,
+            position: location,
+            icon: {
+              url: "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
+            }
+          })
+        } else {
+          marker = null;
+        }
+
+        let infowindow = new google.maps.InfoWindow({
+          content: v.aka_name + '<br/>Address: ' + v.address
+        });
+
+        marker.addListener('click', function(results1) {
+          infowindow.open(map, marker);
+        });
+
+      });
+    }
+
+    function createMarkers2(map, data2) {
+
+      $.each(data2, function(i, v) {
+        results = v.View[0].Result;
+        for (res of results) {
+          loc = res.Location.DisplayPosition;
+          let marker;
+          let location = {
+            lat: loc.Latitude,
+            lng: loc.Longitude
+          };
+
+          if (res.MatchLevel === "landmark") {
+            marker = new google.maps.Marker({
+              map: map,
+              position: location,
+              icon: {
+                url: "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
+              }
+            })
+          };
+
+          let infowindow = new google.maps.InfoWindow({
+            content: `Name: ${res.Location.Name}`
+          });
+
+          marker.addListener('click', function(results2) {
+            infowindow.open(map, marker);
+          });
+
+
+        }
+
+      });
+    }
+  };
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyACQ-Se5XgECXNgPfbY88TBNMYoijTtSUI&callback=initMap"" async defer></script>
+
+
+
+  <!-- putting the Google library scripts at the top level due to use across screens -->
+  <script src="https://apis.google.com/js/platform.js"></script>
+
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src=""></script>
+
+  </script>
+
+
+</body>
+
+</html>
